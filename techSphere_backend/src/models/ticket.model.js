@@ -74,7 +74,7 @@ ticketSchema.index({ priority: 1 });
 ticketSchema.index({ createdAt: -1 });
 
 // Auto-update resolvedAt when status changes to Resolved
-ticketSchema.pre("save", function (next) {
+ticketSchema.pre("save", function () {
   if (
     this.isModified("status") &&
     this.status === "Resolved" &&
@@ -82,7 +82,6 @@ ticketSchema.pre("save", function (next) {
   ) {
     this.resolvedAt = new Date();
   }
-  next();
 });
 
 export const Ticket = mongoose.model("Ticket", ticketSchema);

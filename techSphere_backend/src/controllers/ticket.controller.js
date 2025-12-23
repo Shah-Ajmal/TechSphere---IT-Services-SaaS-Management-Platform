@@ -2,8 +2,8 @@ import { Ticket } from "../models/ticket.model.js";
 
 // @desc    Create new ticket
 // @route   POST /api/tickets
-// @access  Private (Client/User)
-export const createTicket = async (req, res) => {
+// @access  Private
+export const createTicket = async (req, res, next) => {
   try {
     const { title, description, priority, category } = req.body;
 
@@ -12,7 +12,7 @@ export const createTicket = async (req, res) => {
       description,
       priority,
       category,
-      userId: req.user._id,
+      userId: req.user._id, // Set by protect middleware
     });
 
     res.status(201).json({
@@ -21,35 +21,24 @@ export const createTicket = async (req, res) => {
       data: { ticket },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error); // Passes to your error.middleware.js
   }
 };
 
 // @desc    Get all tickets
 // @route   GET /api/tickets
 // @access  Private (Admin gets all, Users get their own)
-export const getAllTickets = async (req, res) => {
+export const getAllTickets = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, status, priority, search } = req.query;
 
-    // Build query based on user role
     let query = {};
-
-    // If user is not admin, only show their tickets
     if (req.user.role !== "admin") {
       query.userId = req.user._id;
     }
 
-    // Add filters
-    if (status) {
-      query.status = status;
-    }
-    if (priority) {
-      query.priority = priority;
-    }
+    if (status) query.status = status;
+    if (priority) query.priority = priority;
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: "i" } },
@@ -60,8 +49,8 @@ export const getAllTickets = async (req, res) => {
     const tickets = await Ticket.find(query)
       .populate("userId", "name email")
       .populate("assignedTo", "name email")
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .skip((Number(page) - 1) * Number(limit))
       .sort({ createdAt: -1 });
 
     const count = await Ticket.countDocuments(query);
@@ -71,22 +60,19 @@ export const getAllTickets = async (req, res) => {
       data: {
         tickets,
         totalPages: Math.ceil(count / limit),
-        currentPage: page,
+        currentPage: Number(page),
         totalTickets: count,
       },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
 // @desc    Get single ticket
 // @route   GET /api/tickets/:id
 // @access  Private
-export const getTicketById = async (req, res) => {
+export const getTicketById = async (req, res, next) => {
   try {
     const ticket = await Ticket.findById(req.params.id)
       .populate("userId", "name email")
@@ -94,21 +80,16 @@ export const getTicketById = async (req, res) => {
       .populate("notes.addedBy", "name email");
 
     if (!ticket) {
-      return res.status(404).json({
-        success: false,
-        message: "Ticket not found",
-      });
+      res.status(404);
+      throw new Error("Ticket not found");
     }
 
-    // Check if user has access to this ticket
     if (
       req.user.role !== "admin" &&
       ticket.userId._id.toString() !== req.user._id.toString()
     ) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to access this ticket",
-      });
+      res.status(403);
+      throw new Error("Not authorized to access this ticket");
     }
 
     res.status(200).json({
@@ -116,25 +97,20 @@ export const getTicketById = async (req, res) => {
       data: { ticket },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
 // @desc    Update ticket
 // @route   PUT /api/tickets/:id
 // @access  Private/Admin
-export const updateTicket = async (req, res) => {
+export const updateTicket = async (req, res, next) => {
   try {
     const ticket = await Ticket.findById(req.params.id);
 
     if (!ticket) {
-      return res.status(404).json({
-        success: false,
-        message: "Ticket not found",
-      });
+      res.status(404);
+      throw new Error("Ticket not found");
     }
 
     const updatedTicket = await Ticket.findByIdAndUpdate(
@@ -154,38 +130,29 @@ export const updateTicket = async (req, res) => {
       data: { ticket: updatedTicket },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
 // @desc    Add note to ticket
 // @route   POST /api/tickets/:id/notes
 // @access  Private
-export const addTicketNote = async (req, res) => {
+export const addTicketNote = async (req, res, next) => {
   try {
     const { message } = req.body;
-
     const ticket = await Ticket.findById(req.params.id);
 
     if (!ticket) {
-      return res.status(404).json({
-        success: false,
-        message: "Ticket not found",
-      });
+      res.status(404);
+      throw new Error("Ticket not found");
     }
 
-    // Check access
     if (
       req.user.role !== "admin" &&
       ticket.userId.toString() !== req.user._id.toString()
     ) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to add notes to this ticket",
-      });
+      res.status(403);
+      throw new Error("Not authorized to add notes to this ticket");
     }
 
     ticket.notes.push({
@@ -193,7 +160,7 @@ export const addTicketNote = async (req, res) => {
       addedBy: req.user._id,
     });
 
-    await ticket.save();
+    await ticket.save(); // This triggers the pre-save hook in your model
 
     const updatedTicket = await Ticket.findById(req.params.id)
       .populate("userId", "name email")
@@ -205,25 +172,20 @@ export const addTicketNote = async (req, res) => {
       data: { ticket: updatedTicket },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
 // @desc    Delete ticket
 // @route   DELETE /api/tickets/:id
 // @access  Private/Admin
-export const deleteTicket = async (req, res) => {
+export const deleteTicket = async (req, res, next) => {
   try {
     const ticket = await Ticket.findById(req.params.id);
 
     if (!ticket) {
-      return res.status(404).json({
-        success: false,
-        message: "Ticket not found",
-      });
+      res.status(404);
+      throw new Error("Ticket not found");
     }
 
     await Ticket.findByIdAndDelete(req.params.id);
@@ -233,9 +195,6 @@ export const deleteTicket = async (req, res) => {
       message: "Ticket deleted successfully",
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
