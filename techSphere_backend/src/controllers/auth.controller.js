@@ -125,6 +125,11 @@ export const getProfile = async (req, res) => {
           role: user.role,
           isActive: user.isActive,
           createdAt: user.createdAt,
+          notifications: user.notifications || {
+            email: true,
+            push: true,
+            weeklyReports: false,
+          },
         },
       },
     });
@@ -152,6 +157,17 @@ export const updateProfile = async (req, res) => {
       });
     }
 
+    // Check if email is being changed and if it's already taken
+    if (email && email !== user.email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) {
+        return res.status(400).json({
+          success: false,
+          message: "Email already in use",
+        });
+      }
+    }
+
     user.name = name || user.name;
     user.email = email || user.email;
 
@@ -168,6 +184,156 @@ export const updateProfile = async (req, res) => {
           role: updatedUser.role,
         },
       },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// @desc    Change password
+// @route   PUT /api/auth/change-password
+// @access  Private
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Get user with password
+    const user = await User.findById(req.user._id).select("+password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Verify current password
+    const isPasswordMatch = await user.comparePassword(currentPassword);
+
+    if (!isPasswordMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    // Update password
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// @desc    Update notification preferences
+// @route   PUT /api/auth/notifications
+// @access  Private
+export const updateNotifications = async (req, res) => {
+  try {
+    const { email, push, weeklyReports } = req.body;
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Update notification preferences
+    user.notifications = {
+      email: email !== undefined ? email : user.notifications?.email ?? true,
+      push: push !== undefined ? push : user.notifications?.push ?? true,
+      weeklyReports:
+        weeklyReports !== undefined
+          ? weeklyReports
+          : user.notifications?.weeklyReports ?? false,
+    };
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Notification preferences updated successfully",
+      data: {
+        notifications: user.notifications,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+//   Get all users (for admin)
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({ isActive: true })
+      .select("name email role")
+      .sort({ name: 1 });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        users,
+        count: users.length,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// @desc    Delete user account
+// @route   DELETE /api/auth/account
+// @access  Private
+export const deleteAccount = async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    // Get user with password
+    const user = await User.findById(req.user._id).select("+password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Verify password before deletion
+    const isPasswordMatch = await user.comparePassword(password);
+
+    if (!isPasswordMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Password is incorrect",
+      });
+    }
+
+    // Delete user
+    await User.findByIdAndDelete(req.user._id);
+
+    res.status(200).json({
+      success: true,
+      message: "Account deleted successfully",
     });
   } catch (error) {
     res.status(500).json({

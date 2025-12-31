@@ -7,6 +7,7 @@ import {
   Ticket,
   BarChart3,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import {
   Sheet,
@@ -25,6 +26,7 @@ const adminNavigation = [
   { name: "Services", to: "/dashboard/services", icon: Briefcase },
   { name: "Subscriptions", to: "/dashboard/subscriptions", icon: CreditCard },
   { name: "Tickets", to: "/dashboard/tickets", icon: Ticket },
+  { name: "AI Assistant", to: "/dashboard/ai-assistant", icon: Sparkles },
   { name: "Analytics", to: "/dashboard/analytics", icon: BarChart3 },
   { name: "Settings", to: "/dashboard/settings", icon: Settings },
 ];
@@ -34,6 +36,7 @@ const clientNavigation = [
   { name: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { name: "Services", to: "/dashboard/services", icon: Briefcase },
   { name: "My Tickets", to: "/dashboard/tickets", icon: Ticket },
+  { name: "AI Assistant", to: "/dashboard/ai-assistant", icon: Sparkles },
   { name: "Settings", to: "/dashboard/settings", icon: Settings },
 ];
 

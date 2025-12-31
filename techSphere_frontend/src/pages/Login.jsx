@@ -18,6 +18,7 @@ import {
   loginFailure,
 } from "@/redux/slices/authSlice";
 import { login } from "@/services/authService";
+import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();

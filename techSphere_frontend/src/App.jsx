@@ -17,6 +17,7 @@ import Tickets from "./pages/Tickets";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import Register from "@/pages/Register";
+import AIAssistant from "@/pages/AIAssistant";
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
             <Route path="services" element={<Services />} />
             <Route path="subscriptions" element={<Subscriptions />} />
             <Route path="tickets" element={<Tickets />} />
+            <Route path="ai-assistant" element={<AIAssistant />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="settings" element={<Settings />} />
           </Route>

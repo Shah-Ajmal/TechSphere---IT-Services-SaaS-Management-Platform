@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 import MobileMenu from "./MobileMenu";
+import FloatingChatWidget from "@/components/chat/FloatingChatWidget";
 
 const DashboardLayout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -25,6 +26,7 @@ const DashboardLayout = () => {
           <Outlet />
         </main>
       </div>
+      <FloatingChatWidget />
     </div>
   );
 };

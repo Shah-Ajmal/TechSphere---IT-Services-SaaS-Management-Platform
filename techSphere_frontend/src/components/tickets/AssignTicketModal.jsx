@@ -9,224 +9,166 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle2, Loader2, User } from "lucide-react";
 import { updateTicket } from "@/services/ticketService";
-import { User, UserCheck } from "lucide-react";
 import axiosInstance from "@/lib/axios";
 
-const AssignTicketModal = ({ open, onOpenChange, ticket, onSuccess }) => {
+const AssignTicketModal = ({ ticket, open, onOpenChange, onSuccess }) => {
   const [users, setUsers] = useState([]);
-  const [selectedUserId, setSelectedUserId] = useState(
-    ticket?.assignedTo?._id || ""
-  );
+  const [selectedUser, setSelectedUser] = useState("");
   const [loading, setLoading] = useState(false);
-  const [loadingUsers, setLoadingUsers] = useState(true);
-  const [error, setError] = useState("");
+  const [fetchingUsers, setFetchingUsers] = useState(true);
+  const [message, setMessage] = useState({ type: "", text: "" });
 
   useEffect(() => {
     if (open) {
       fetchUsers();
-      setSelectedUserId(ticket?.assignedTo?._id || "");
+      setSelectedUser(ticket?.assignedTo?._id || "");
     }
   }, [open, ticket]);
 
   const fetchUsers = async () => {
+    setFetchingUsers(true);
     try {
-      setLoadingUsers(true);
-      // Try to fetch all users - adjust endpoint based on your backend
+      // Try to fetch users from backend
       const response = await axiosInstance.get("/users");
       if (response.data.success) {
-        // Filter for admin users only
-        const adminUsers = response.data.data.users.filter(
-          (u) => u.role === "admin"
-        );
-        setUsers(adminUsers);
+        setUsers(response.data.data.users || []);
       }
-    } catch (err) {
-      console.error("Error fetching users:", err);
-      // Fallback: Use mock admin users if endpoint doesn't exist
-      setUsers([
-        {
-          _id: "mock1",
-          name: "Admin User",
-          email: "admin@techsphere.com",
-          role: "admin",
-        },
-      ]);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      // If /users endpoint doesn't exist, fetch from auth or use empty array
+      setUsers([]);
+      setMessage({
+        type: "error",
+        text: "Unable to fetch users. Please contact admin to set up user management.",
+      });
     } finally {
-      setLoadingUsers(false);
+      setFetchingUsers(false);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  const handleAssign = async () => {
+    if (!selectedUser) {
+      setMessage({ type: "error", text: "Please select a user" });
+      return;
+    }
+
     setLoading(true);
+    setMessage({ type: "", text: "" });
 
     try {
-      // Automatically update status when assigning
-      const updateData = selectedUserId
-        ? {
-            assignedTo: selectedUserId,
-            status: "In Progress", // Auto-update status
-          }
-        : {
-            assignedTo: null,
-            status: "Open", // Revert to Open if unassigned
-          };
-
-      const response = await updateTicket(ticket._id, updateData);
+      const response = await updateTicket(ticket._id, {
+        assignedTo: selectedUser,
+      });
 
       if (response.success) {
-        onOpenChange(false);
-        onSuccess(); // Triggers Redux fetchAllTickets in the parent
+        setMessage({ type: "success", text: "Ticket assigned successfully!" });
+        setTimeout(() => {
+          onSuccess();
+          onOpenChange(false);
+        }, 1500);
       }
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to assign ticket");
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error.response?.data?.message || "Failed to assign ticket",
+      });
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Assign Ticket</DialogTitle>
           <DialogDescription>
-            Assign this ticket to a team member for resolution
+            Assign this ticket to a team member
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-              {error}
-            </div>
+        <div className="space-y-4">
+          {message.text && (
+            <Alert
+              variant={message.type === "error" ? "destructive" : "default"}
+            >
+              {message.type === "success" ? (
+                <CheckCircle2 className="h-4 w-4" />
+              ) : (
+                <AlertCircle className="h-4 w-4" />
+              )}
+              <AlertDescription>{message.text}</AlertDescription>
+            </Alert>
           )}
 
-          {/* Current Assignment */}
-          <div className="bg-muted/50 p-4 rounded-lg">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm font-medium">Currently Assigned:</span>
-              {ticket?.assignedTo ? (
-                <Badge variant="outline">{ticket.assignedTo.name}</Badge>
-              ) : (
-                <Badge variant="secondary">Unassigned</Badge>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Ticket: {ticket?.title}
+          {/* Ticket Info */}
+          <div className="p-3 bg-muted/50 rounded-lg">
+            <p className="text-sm font-medium">{ticket?.title}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {ticket?.category} • {ticket?.priority} Priority
             </p>
           </div>
 
+          {/* User Selection */}
           <div className="space-y-2">
-            <Label>Assign To</Label>
-
-            {loadingUsers ? (
-              <div className="py-8 text-center text-muted-foreground">
-                Loading team members...
+            <Label htmlFor="user-select">Assign To</Label>
+            {fetchingUsers ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin" />
               </div>
             ) : users.length === 0 ? (
-              <div className="py-8 text-center text-muted-foreground">
-                No team members available
+              <div className="text-sm text-muted-foreground p-3 bg-muted rounded-md">
+                No users available. Please ensure the /api/users endpoint is set
+                up.
               </div>
             ) : (
-              <div className="grid gap-2 max-h-[300px] overflow-y-auto">
-                {/* Unassign Option */}
-                <button
-                  type="button"
-                  onClick={() => setSelectedUserId("")}
-                  disabled={loading}
-                  className={`
-                    flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left
-                    ${
-                      !selectedUserId
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50"
-                    }
-                    ${
-                      loading
-                        ? "opacity-50 cursor-not-allowed"
-                        : "cursor-pointer"
-                    }
-                  `}
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                    <User className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium">Unassigned</div>
-                    <p className="text-sm text-muted-foreground">
-                      Remove current assignment
-                    </p>
-                  </div>
-                  {!selectedUserId && (
-                    <UserCheck className="h-5 w-5 text-primary shrink-0" />
-                  )}
-                </button>
-
-                {/* User Options */}
-                {users.map((user) => {
-                  const isSelected = selectedUserId === user._id;
-
-                  return (
-                    <button
-                      key={user._id}
-                      type="button"
-                      onClick={() => setSelectedUserId(user._id)}
-                      disabled={loading}
-                      className={`
-                        flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left
-                        ${
-                          isSelected
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
-                        }
-                        ${
-                          loading
-                            ? "opacity-50 cursor-not-allowed"
-                            : "cursor-pointer"
-                        }
-                      `}
-                    >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                        <User className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium">{user.name}</div>
-                        <p className="text-sm text-muted-foreground">
-                          {user.email}
-                        </p>
-                      </div>
-                      {isSelected && (
-                        <UserCheck className="h-5 w-5 text-primary shrink-0" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+              <select
+                id="user-select"
+                value={selectedUser}
+                onChange={(e) => setSelectedUser(e.target.value)}
+                disabled={loading}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Select a user...</option>
+                {users.map((user) => (
+                  <option key={user._id} value={user._id}>
+                    {user.name} ({user.role})
+                  </option>
+                ))}
+              </select>
             )}
           </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={
-                loading || selectedUserId === (ticket?.assignedTo?._id || "")
-              }
-            >
-              {loading ? "Assigning..." : "Assign Ticket"}
-            </Button>
-          </DialogFooter>
-        </form>
+          {/* Current Assignment */}
+          {ticket?.assignedTo && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <User className="h-4 w-4" />
+              <span>
+                Currently assigned to: <strong>{ticket.assignedTo.name}</strong>
+              </span>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleAssign}
+            disabled={loading || !selectedUser || users.length === 0}
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Assign Ticket
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -6,6 +6,7 @@ import ServiceCard from "@/components/services/ServiceCard";
 import AddServiceModal from "@/components/services/AddServiceModal";
 import EditServiceModal from "@/components/services/EditServiceModal";
 import ViewServiceDialog from "@/components/services/ViewServiceDialog";
+import PurchaseServiceModal from "@/components/services/PurchaseServiceModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +56,7 @@ const Services = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
 
   const user = useAppSelector((state) => state.auth.user);
   const isAdmin = user?.role === "admin";
@@ -77,6 +79,18 @@ const Services = () => {
       setFilteredServices(filtered);
     }
   }, [search, services]);
+
+  const handlePurchase = (service) => {
+    setSelectedService(service);
+    setPurchaseModalOpen(true);
+  };
+
+  const handlePurchaseSuccess = () => {
+    setPurchaseModalOpen(false);
+    setSelectedService(null);
+    // Optionally refresh services or show success message
+    fetchServices();
+  };
 
   const fetchServices = async () => {
     try {
@@ -226,6 +240,7 @@ const Services = () => {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onView={handleView}
+              onPurchase={handlePurchase} // ADD THIS LINE
             />
           ))}
         </div>
@@ -276,6 +291,13 @@ const Services = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Purchase Service Modal - ADD THIS */}
+      <PurchaseServiceModal
+        open={purchaseModalOpen}
+        onOpenChange={setPurchaseModalOpen}
+        service={selectedService}
+        onSuccess={handlePurchaseSuccess}
+      />
     </div>
   );
 };

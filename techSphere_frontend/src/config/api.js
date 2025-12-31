@@ -32,6 +32,14 @@ export const API_ENDPOINTS = {
     BY_ID: (id) => `/tickets/${id}`,
     NOTES: (id) => `/tickets/${id}/notes`,
   },
+
+  ANALYTICS: {
+    DASHBOARD: `/analytics/dashboard`,
+    REVENUE_TRENDS: `/analytics/revenue-trends`,
+    CLIENT_ACQUISITION: `/analytics/client-acquisition`,
+    SUBSCRIPTION_DISTRIBUTION: `/analytics/subscription-distribution`,
+    SERVICE_PERFORMANCE: `/analytics/service-performance`,
+  },
 };
 
 export default API_BASE_URL;

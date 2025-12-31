@@ -7,6 +7,7 @@ import {
   Ticket,
   BarChart3,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import Logo from "@/components/common/Logo";
 import { cn } from "@/lib/utils";
@@ -17,9 +18,9 @@ const adminNavigation = [
   { name: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { name: "Clients", to: "/dashboard/clients", icon: Users },
   { name: "Services", to: "/dashboard/services", icon: Briefcase },
-  { name: "Subscriptions", to: "/dashboard/subscriptions", icon: CreditCard },
   { name: "Tickets", to: "/dashboard/tickets", icon: Ticket },
   { name: "Analytics", to: "/dashboard/analytics", icon: BarChart3 },
+  { name: "AI Assistant", to: "/dashboard/ai-assistant", icon: Sparkles },
   { name: "Settings", to: "/dashboard/settings", icon: Settings },
 ];
 
@@ -27,7 +28,9 @@ const adminNavigation = [
 const clientNavigation = [
   { name: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { name: "Services", to: "/dashboard/services", icon: Briefcase },
+  { name: "Subscriptions", to: "/dashboard/subscriptions", icon: CreditCard },
   { name: "My Tickets", to: "/dashboard/tickets", icon: Ticket },
+  { name: "AI Assistant", to: "/dashboard/ai-assistant", icon: Sparkles },
   { name: "Settings", to: "/dashboard/settings", icon: Settings },
 ];
 

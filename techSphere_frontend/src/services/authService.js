@@ -33,3 +33,30 @@ export const updateProfile = async (userData) => {
   );
   return response.data;
 };
+
+// Change password
+export const changeUserPassword = async (passwordData) => {
+  const response = await axiosInstance.put(
+    "/auth/change-password",
+    passwordData
+  );
+  return response.data;
+};
+
+// Update notification preferences
+export const updateNotificationPreferences = async (notificationData) => {
+  const response = await axiosInstance.put(
+    "/auth/notifications",
+    notificationData
+  );
+  return response.data;
+};
+
+// Delete account
+
+export const deleteUserAccount = async (password) => {
+  const response = await axiosInstance.delete("/auth/account", {
+    data: { password },
+  });
+  return response.data;
+};

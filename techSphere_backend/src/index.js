@@ -9,7 +9,10 @@ import authRoutes from "./routes/auth.routes.js";
 import clientRoutes from "./routes/client.routes.js";
 import serviceRoutes from "./routes/service.routes.js";
 import ticketRoutes from "./routes/ticket.routes.js";
-
+import analyticsRoutes from "./routes/analytics.routes.js";
+import userRoutes from "./routes/auth.routes.js";
+import purchaseRoutes from "./routes/purchase.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
 // Load environment variables
 dotenv.config();
 
@@ -51,6 +54,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/tickets", ticketRoutes);
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/purchases", purchaseRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Error handling middleware
 app.use(notFound);
