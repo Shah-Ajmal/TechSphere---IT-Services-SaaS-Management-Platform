@@ -10,10 +10,9 @@ import clientRoutes from "./routes/client.routes.js";
 import serviceRoutes from "./routes/service.routes.js";
 import ticketRoutes from "./routes/ticket.routes.js";
 import analyticsRoutes from "./routes/analytics.routes.js";
-import userRoutes from "./routes/user.routes.js";
+import userRoutes from "./routes/auth.routes.js";
 import purchaseRoutes from "./routes/purchase.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
-
 // Load environment variables
 dotenv.config();
 
@@ -24,6 +23,7 @@ const app = express();
 connectDB();
 
 // Middleware
+
 app.use(
   cors({
     origin: [
@@ -34,6 +34,13 @@ app.use(
     credentials: true,
   })
 );
+
+// app.use(
+//   cors({
+//     origin: process.env.FRONTEND_URL || "http://localhost:5173",
+//     credentials: true,
+//   })
+// );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -51,15 +58,6 @@ app.get("/", (req, res) => {
     success: true,
     message: "TechSphere API is running",
     version: "1.0.0",
-  });
-});
-
-// Add health check endpoint for monitoring
-app.get("/health", (req, res) => {
-  res.json({
-    status: "ok",
-    timestamp: new Date(),
-    uptime: process.uptime(),
   });
 });
 
