@@ -10,9 +10,10 @@ import clientRoutes from "./routes/client.routes.js";
 import serviceRoutes from "./routes/service.routes.js";
 import ticketRoutes from "./routes/ticket.routes.js";
 import analyticsRoutes from "./routes/analytics.routes.js";
-import userRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
 import purchaseRoutes from "./routes/purchase.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
+
 // Load environment variables
 dotenv.config();
 
@@ -25,7 +26,11 @@ connectDB();
 // Middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      process.env.FRONTEND_URL, // Your Vercel URL
+      "https://*.vercel.app", // All Vercel preview deployments
+    ],
     credentials: true,
   })
 );
@@ -46,6 +51,15 @@ app.get("/", (req, res) => {
     success: true,
     message: "TechSphere API is running",
     version: "1.0.0",
+  });
+});
+
+// Add health check endpoint for monitoring
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    timestamp: new Date(),
+    uptime: process.uptime(),
   });
 });
 

@@ -1,9 +1,14 @@
 import axios from "axios";
 
 // Get API base URL from environment or use default
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+// const API_BASE_URL =
+//   import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD
+    ? "https://your-backend.onrender.com/api" // Will be updated after backend deployment
+    : "http://localhost:5000/api");
 console.log("🔗 Axios Base URL:", API_BASE_URL); // Debug log
 
 // Create axios instance
