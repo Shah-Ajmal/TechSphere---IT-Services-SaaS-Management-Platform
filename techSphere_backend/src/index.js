@@ -27,14 +27,13 @@ connectDB();
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
-      process.env.FRONTEND_URL, // Your Vercel URL
-      "https://tech-sphere-it-services-saa-s-manag.vercel.app/", // All Vercel preview deployments
+      process.env.FRONTEND_URL,
+      "https://techsphere.vercel.app", // Your production URL
+      "https://*.vercel.app", // All Vercel preview deployments
     ],
     credentials: true,
   })
 );
-
 // app.use(
 //   cors({
 //     origin: process.env.FRONTEND_URL || "http://localhost:5173",
