@@ -13,6 +13,7 @@ import analyticsRoutes from "./routes/analytics.routes.js";
 import userRoutes from "./routes/auth.routes.js";
 import purchaseRoutes from "./routes/purchase.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
+
 // Load environment variables
 dotenv.config();
 
@@ -22,24 +23,33 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-// Middleware
+// Middleware - CORS Configuration
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://tech-sphere-it-services-saa-s-manag.vercel.app",
+  process.env.FRONTEND_URL,
+].filter(Boolean); // Remove any undefined values
 
 app.use(
   cors({
-    origin: [
-      process.env.FRONTEND_URL,
-      "https://techsphere.vercel.app", // Your production URL
-      "https://*.vercel.app", // All Vercel preview deployments
-    ],
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
+      if (!origin) return callback(null, true);
+
+      // Check if origin is allowed
+      if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+        callback(null, true);
+      } else {
+        console.log("Blocked origin:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-// app.use(
-//   cors({
-//     origin: process.env.FRONTEND_URL || "http://localhost:5173",
-//     credentials: true,
-//   })
-// );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -57,6 +67,7 @@ app.get("/", (req, res) => {
     success: true,
     message: "TechSphere API is running",
     version: "1.0.0",
+    allowedOrigins: allowedOrigins, // Helpful for debugging
   });
 });
 
@@ -82,7 +93,5 @@ app.listen(PORT, () => {
     `🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
   );
   console.log(`📡 API available at http://localhost:${PORT}`);
-  console.log(
-    `🌐 Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:5173"}`
-  );
+  console.log(`🌐 Allowed origins:`, allowedOrigins);
 });
