@@ -29,7 +29,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       process.env.FRONTEND_URL, // Your Vercel URL
-      "https://*.vercel.app", // All Vercel preview deployments
+      "https://tech-sphere-it-services-saa-s-manag.vercel.app/", // All Vercel preview deployments
     ],
     credentials: true,
   })
